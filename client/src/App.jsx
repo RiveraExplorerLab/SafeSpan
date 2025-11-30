@@ -1,9 +1,10 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ConfirmProvider } from './components/ConfirmDialog';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import AdminPage from './pages/AdminPage';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -47,6 +48,11 @@ function PublicRoute({ children }) {
   return children;
 }
 
+function AdminPageWrapper() {
+  const navigate = useNavigate();
+  return <AdminPage onBack={() => navigate('/')} />;
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -63,6 +69,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <AdminPageWrapper />
           </ProtectedRoute>
         }
       />

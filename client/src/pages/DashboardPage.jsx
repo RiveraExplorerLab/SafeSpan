@@ -2,7 +2,6 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useOverview } from '../hooks/useOverview';
 import SetupPage from './SetupPage';
 import Navigation from '../components/Navigation';
-import OfflineBanner from '../components/OfflineBanner';
 import { DashboardSkeleton } from '../components/Skeleton';
 import { EmptyRecentTransactions, EmptyUpcomingBills } from '../components/EmptyState';
 import SafeToSpendCard from '../components/SafeToSpendCard';
@@ -17,18 +16,7 @@ import SavingsGoalsCard from '../components/SavingsGoalsCard';
 import { BillsView, TransactionsView, HistoryView, AccountsView } from './views';
 
 export default function DashboardPage() {
-  const { 
-    data, 
-    loading, 
-    error, 
-    refresh,
-    fromCache,
-    cacheTime,
-    online,
-    queuedCount,
-    syncing,
-    sync
-  } = useOverview();
+  const { data, loading, error, refresh } = useOverview();
   const [needsSetup, setNeedsSetup] = useState(false);
   const [currentView, setCurrentView] = useState('dashboard');
   const justCompletedSetup = useRef(false);
@@ -43,7 +31,7 @@ export default function DashboardPage() {
       // If we just completed setup, retry instead of showing setup again
       if (justCompletedSetup.current && retryCount.current < 5) {
         retryCount.current += 1;
-        const delay = Math.min(1000 * retryCount.current, 3000); // 1s, 2s, 3s, 3s, 3s
+        const delay = Math.min(1000 * retryCount.current, 3000);
         console.log(`Setup data not ready, retrying in ${delay}ms (attempt ${retryCount.current}/5)...`);
         setTimeout(() => {
           refresh();
@@ -96,7 +84,6 @@ export default function DashboardPage() {
             error={error}
             refresh={refresh}
             needsSetup={needsSetup}
-            queuedCount={queuedCount}
             onNavigate={navigateTo}
           />
         );
@@ -106,20 +93,12 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navigation currentView={currentView} onNavigate={navigateTo} />
-      <OfflineBanner 
-        online={online}
-        queuedCount={queuedCount}
-        syncing={syncing}
-        onSync={sync}
-        fromCache={fromCache}
-        cacheTime={cacheTime}
-      />
       {renderContent()}
     </div>
   );
 }
 
-function DashboardContent({ data, loading, error, refresh, needsSetup, queuedCount, onNavigate }) {
+function DashboardContent({ data, loading, error, refresh, needsSetup, onNavigate }) {
   if (loading && !data) {
     return <DashboardSkeleton />;
   }
@@ -174,11 +153,6 @@ function DashboardContent({ data, loading, error, refresh, needsSetup, queuedCou
 
       <div className="mt-6">
         <QuickAddTransaction onSuccess={refresh} accounts={data?.accounts || []} />
-        {queuedCount > 0 && (
-          <p className="text-xs text-amber-600 mt-2 text-center">
-            {queuedCount} transaction{queuedCount !== 1 ? 's' : ''} pending sync
-          </p>
-        )}
       </div>
 
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">

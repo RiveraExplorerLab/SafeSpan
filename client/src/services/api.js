@@ -1,41 +1,57 @@
 import { auth } from './firebase';
-import { 
-  isOnline, 
-  saveToCache, 
-  getFromCache, 
-  queueTransaction, 
-  getQueuedTransactions,
-  removeFromQueue 
-} from './offline';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 /**
  * Get the current user's ID token
+ * @param {boolean} forceRefresh - Force refresh the token
  */
-async function getAuthToken() {
+async function getAuthToken(forceRefresh = false) {
   const user = auth.currentUser;
   if (!user) {
     throw new Error('Not authenticated');
   }
-  return user.getIdToken();
+  return user.getIdToken(forceRefresh);
 }
 
 /**
  * Make an authenticated API request
  */
 async function apiRequest(endpoint, options = {}) {
-  const token = await getAuthToken();
+  let token;
+  
+  try {
+    token = await getAuthToken(false);
+  } catch (err) {
+    throw new Error('Not authenticated');
+  }
 
   const url = `${API_BASE_URL}${endpoint}`;
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-      ...options.headers,
-    },
-  });
+  
+  const makeRequest = async (authToken) => {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`,
+        'Cache-Control': 'no-cache',
+        ...options.headers,
+      },
+    });
+    return response;
+  };
+
+  let response = await makeRequest(token);
+
+  // If we get a 401, try refreshing the token once
+  if (response.status === 401) {
+    try {
+      token = await getAuthToken(true);
+      response = await makeRequest(token);
+    } catch (refreshError) {
+      throw new Error('Session expired. Please sign in again.');
+    }
+  }
 
   const data = await response.json();
 
@@ -52,29 +68,7 @@ async function apiRequest(endpoint, options = {}) {
 // ============ Overview ============
 
 export async function fetchOverview() {
-  // Try to fetch from network first
-  if (isOnline()) {
-    try {
-      const data = await apiRequest('/api/overview');
-      // Cache the result
-      await saveToCache('overview', data);
-      return { data, fromCache: false };
-    } catch (err) {
-      // If network fails, try cache
-      const cached = await getFromCache('overview');
-      if (cached) {
-        return { data: cached.data, fromCache: true, cacheTime: cached.timestamp };
-      }
-      throw err;
-    }
-  } else {
-    // Offline - use cache
-    const cached = await getFromCache('overview');
-    if (cached) {
-      return { data: cached.data, fromCache: true, cacheTime: cached.timestamp };
-    }
-    throw new Error('No cached data available. Please connect to the internet.');
-  }
+  return apiRequest('/api/overview');
 }
 
 // ============ Settings ============
@@ -171,17 +165,6 @@ export async function fetchTransaction(txnId) {
 }
 
 export async function createTransaction(transaction) {
-  // If offline, queue the transaction
-  if (!isOnline()) {
-    const queued = await queueTransaction(transaction);
-    return { 
-      transaction: queued, 
-      queued: true,
-      message: 'Transaction saved offline. Will sync when connected.' 
-    };
-  }
-
-  // Online - send to server
   return apiRequest('/api/transactions', {
     method: 'POST',
     body: JSON.stringify(transaction),
@@ -199,56 +182,6 @@ export async function deleteTransaction(txnId) {
   return apiRequest(`/api/transactions/${txnId}`, {
     method: 'DELETE',
   });
-}
-
-// ============ Offline Sync ============
-
-/**
- * Sync all queued transactions
- */
-export async function syncQueuedTransactions() {
-  if (!isOnline()) {
-    throw new Error('Cannot sync while offline');
-  }
-
-  const queued = await getQueuedTransactions();
-  if (queued.length === 0) {
-    return { synced: 0, failed: 0 };
-  }
-
-  let synced = 0;
-  let failed = 0;
-
-  for (const txn of queued) {
-    try {
-      await apiRequest('/api/transactions', {
-        method: 'POST',
-        body: JSON.stringify({
-          date: txn.date,
-          amount: txn.amount,
-          description: txn.description,
-          type: txn.type,
-          billId: txn.billId,
-          clientId: txn.clientId,
-        }),
-      });
-      await removeFromQueue(txn.clientId);
-      synced++;
-    } catch (err) {
-      console.error('Failed to sync transaction:', txn.clientId, err);
-      failed++;
-    }
-  }
-
-  return { synced, failed };
-}
-
-/**
- * Get count of queued transactions
- */
-export async function getQueuedCount() {
-  const queued = await getQueuedTransactions();
-  return queued.length;
 }
 
 // ============ Pay Periods ============

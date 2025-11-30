@@ -4,7 +4,7 @@ import { errorResponse } from '../utils/response.js';
 /**
  * Firebase Auth middleware
  * Extracts and verifies the ID token from Authorization header
- * Sets req.userId on success
+ * Sets req.userId and req.userEmail on success
  */
 export async function authenticate(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -20,6 +20,7 @@ export async function authenticate(req, res, next) {
   try {
     const decodedToken = await auth.verifyIdToken(idToken);
     req.userId = decodedToken.uid;
+    req.userEmail = decodedToken.email;
     next();
   } catch (error) {
     console.error('Auth error:', error.message);
