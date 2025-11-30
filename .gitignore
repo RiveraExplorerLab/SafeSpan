@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Build outputs
+dist/
+build/
+.vite/
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+pubsub-debug.log
+*.local
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDE and editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*.swn
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+
+# Portfolio documentation (for external website, not codebase)
+# These are generated for the portfolio site and not part of the source
+CHANGELOG.md
+docs/overview.md
+docs/technical/
+docs/portfolio/
+
+# Misc
+.cache/
+*.tgz
