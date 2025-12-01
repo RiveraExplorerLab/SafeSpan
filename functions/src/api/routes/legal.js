@@ -1,7 +1,12 @@
-import express from 'express';
+/**
+ * Legal Route
+ * GET/POST /api/legal
+ */
+
+import { Router } from 'express';
 import { db } from '../firebase.js';
 
-const router = express.Router();
+const router = Router();
 
 // GET /api/legal/status - Check if user has agreed to terms
 router.get('/status', async (req, res) => {
