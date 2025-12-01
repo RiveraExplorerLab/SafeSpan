@@ -99,12 +99,20 @@ body {
     border-width: 1px;
     font-size: 1rem;
     min-height: 48px;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   
   .input:focus {
     outline: none;
     box-shadow: 0 0 0 2px #10b981;
     border-color: transparent;
+  }
+
+  /* Constrain date inputs on mobile */
+  input[type="date"].input {
+    -webkit-appearance: none;
+    appearance: none;
   }
 
   /* Larger inputs on mobile */

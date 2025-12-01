@@ -56,11 +56,13 @@ export default function IncomeSourcesCard({ sources = [], accounts = [], onUpdat
       resetForm();
     }
     setShowForm(true);
+    document.body.style.overflow = 'hidden';
   };
 
   const closeForm = () => {
     setShowForm(false);
     resetForm();
+    document.body.style.overflow = '';
   };
 
   const addDeposit = () => {
@@ -267,20 +269,33 @@ export default function IncomeSourcesCard({ sources = [], accounts = [], onUpdat
 
       {/* Add/Edit Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <form onSubmit={handleSubmit} className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-[60]">
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-t-xl md:rounded-xl shadow-xl w-full md:max-w-md flex flex-col"
+            style={{ maxHeight: 'calc(100vh - 60px)' }}
+          >
+            {/* Handle bar for mobile */}
+            <div className="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
+              <div className="w-10 h-1 bg-gray-300 dark:bg-gray-600 rounded-full" />
+            </div>
+            
+            {/* Header */}
+            <div className="px-6 pt-2 md:pt-6 pb-2 flex-shrink-0">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 {editingSource ? 'Edit Income Source' : 'Add Income Source'}
               </h3>
+            </div>
 
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto overscroll-contain px-6" style={{ WebkitOverflowScrolling: 'touch' }}>
               {error && (
                 <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg mb-4 text-sm">
                   {error}
                 </div>
               )}
 
-              <div className="space-y-4">
+              <form onSubmit={handleSubmit} id="income-source-form">
+                <div className="space-y-4">
                 <div>
                   <label className="label">Name</label>
                   <input
@@ -418,9 +433,16 @@ export default function IncomeSourcesCard({ sources = [], accounts = [], onUpdat
                     </p>
                   )}
                 </div>
-              </div>
+                </div>
+              </form>
+            </div>
 
-              <div className="flex gap-3 mt-6">
+            {/* Fixed footer with buttons */}
+            <div 
+              className="flex-shrink-0 px-6 pt-3 pb-4 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700"
+              style={{ paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom, 0px) + 80px))' }}
+            >
+              <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={closeForm}
@@ -430,6 +452,7 @@ export default function IncomeSourcesCard({ sources = [], accounts = [], onUpdat
                 </button>
                 <button
                   type="submit"
+                  form="income-source-form"
                   className="btn-primary flex-1"
                   disabled={loading}
                 >
@@ -449,7 +472,7 @@ export default function IncomeSourcesCard({ sources = [], accounts = [], onUpdat
                   Delete Income Source
                 </button>
               )}
-            </form>
+            </div>
           </div>
         </div>
       )}

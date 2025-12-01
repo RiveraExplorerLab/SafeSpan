@@ -29,6 +29,16 @@ export default function QuickAddTransaction({ onSuccess, accounts = [], isOpen, 
   const hasMultipleAccounts = accounts.length > 1;
   const hasCreditCards = creditCards.length > 0;
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (modalOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [modalOpen]);
+
   useEffect(() => {
     if (accounts.length > 0 && !accountId) {
       const defaultAccount = bankAccounts[0] || accounts[0];
@@ -162,23 +172,30 @@ export default function QuickAddTransaction({ onSuccess, accounts = [], isOpen, 
   return (
     <>
       {triggerButton}
-      {/* Modal Overlay */}
-      <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
+      {/* Modal Overlay - fixed positioning with proper z-index */}
+      <div 
+        className="fixed inset-0 z-[60] flex items-end md:items-center justify-center"
+        style={{ touchAction: 'none' }}
+      >
         {/* Backdrop */}
         <div 
           className="absolute inset-0 bg-black/50" 
           onClick={handleClose}
         />
         
-        {/* Modal Content - slides up on mobile */}
-        <div className="relative w-full md:max-w-md bg-white dark:bg-gray-800 rounded-t-2xl md:rounded-xl shadow-xl max-h-[90vh] overflow-hidden animate-slideUp md:animate-fadeIn md:mx-4">
+        {/* Modal Content */}
+        <div 
+          className="relative w-full md:max-w-md bg-white dark:bg-gray-800 rounded-t-2xl md:rounded-xl shadow-xl animate-slideUp md:animate-fadeIn md:mx-4 flex flex-col"
+          style={{ maxHeight: 'calc(100vh - 100px)' }}
+        >
           {/* Handle bar for mobile */}
-          <div className="md:hidden flex justify-center pt-3 pb-1">
+          <div className="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
             <div className="w-10 h-1 bg-gray-300 dark:bg-gray-600 rounded-full" />
           </div>
 
-          <div className="px-4 md:px-6 pb-6 pt-2 md:pt-6 overflow-y-auto max-h-[calc(90vh-2rem)]">
-            <div className="flex items-center justify-between mb-4">
+          {/* Header - fixed at top */}
+          <div className="px-4 md:px-6 pt-2 md:pt-6 pb-2 flex-shrink-0">
+            <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Add Transaction</h3>
               <button
                 onClick={handleClose}
@@ -189,14 +206,20 @@ export default function QuickAddTransaction({ onSuccess, accounts = [], isOpen, 
                 </svg>
               </button>
             </div>
+          </div>
 
+          {/* Scrollable form content */}
+          <div 
+            className="flex-1 overflow-y-auto overscroll-contain px-4 md:px-6"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
             {error && (
               <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-3 py-2 rounded-lg mb-4 text-sm">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} id="transaction-form">
               {/* Type Selection - Scrollable on mobile */}
               <div className="flex gap-2 mb-4 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
                 <button
@@ -268,7 +291,7 @@ export default function QuickAddTransaction({ onSuccess, accounts = [], isOpen, 
                   </label>
                   <select
                     id="accountId"
-                    className="input h-12"
+                    className="input"
                     value={accountId}
                     onChange={(e) => setAccountId(e.target.value)}
                     required
@@ -288,7 +311,7 @@ export default function QuickAddTransaction({ onSuccess, accounts = [], isOpen, 
                   <label htmlFor="accountId" className="label">Pay From</label>
                   <select
                     id="accountId"
-                    className="input h-12"
+                    className="input"
                     value={accountId}
                     onChange={(e) => setAccountId(e.target.value)}
                     required
@@ -308,7 +331,7 @@ export default function QuickAddTransaction({ onSuccess, accounts = [], isOpen, 
                   <label htmlFor="toAccountId" className="label">Pay Credit Card</label>
                   <select
                     id="toAccountId"
-                    className="input h-12"
+                    className="input"
                     value={toAccountId}
                     onChange={(e) => {
                       setToAccountId(e.target.value);
@@ -335,7 +358,7 @@ export default function QuickAddTransaction({ onSuccess, accounts = [], isOpen, 
                   <label htmlFor="toAccountId" className="label">To Account</label>
                   <select
                     id="toAccountId"
-                    className="input h-12"
+                    className="input"
                     value={toAccountId}
                     onChange={(e) => setToAccountId(e.target.value)}
                     required
@@ -358,7 +381,7 @@ export default function QuickAddTransaction({ onSuccess, accounts = [], isOpen, 
                   <label htmlFor="billId" className="label">Select Bill</label>
                   <select
                     id="billId"
-                    className="input h-12"
+                    className="input"
                     value={billId}
                     onChange={(e) => setBillId(e.target.value)}
                     required
@@ -395,7 +418,7 @@ export default function QuickAddTransaction({ onSuccess, accounts = [], isOpen, 
                   <input
                     type="number"
                     id="amount"
-                    className="input h-14 pl-9 text-xl font-semibold"
+                    className="input pl-9 text-xl font-semibold"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="0.00"
@@ -413,7 +436,7 @@ export default function QuickAddTransaction({ onSuccess, accounts = [], isOpen, 
                 <input
                   type="text"
                   id="description"
-                  className="input h-12"
+                  className="input"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder={
@@ -431,7 +454,7 @@ export default function QuickAddTransaction({ onSuccess, accounts = [], isOpen, 
                   <label htmlFor="category" className="label">Category</label>
                   <select
                     id="category"
-                    className="input h-12"
+                    className="input"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                   >
@@ -449,7 +472,7 @@ export default function QuickAddTransaction({ onSuccess, accounts = [], isOpen, 
                 <input
                   type="date"
                   id="date"
-                  className="input h-12"
+                  className="input"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   max={today}
@@ -463,32 +486,38 @@ export default function QuickAddTransaction({ onSuccess, accounts = [], isOpen, 
                   💳 This will increase your credit card balance
                 </p>
               )}
-
-              {/* Submit Buttons */}
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  className="btn-secondary flex-1 h-12 text-base"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn-primary flex-1 h-12 text-base"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <span className="inline-flex items-center gap-2">
-                      <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                      Adding...
-                    </span>
-                  ) : (
-                    'Add'
-                  )}
-                </button>
-              </div>
             </form>
+          </div>
+
+          {/* Fixed footer with buttons - above bottom nav */}
+          <div 
+            className="flex-shrink-0 px-4 md:px-6 pt-3 pb-4 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700"
+            style={{ paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom, 0px) + 80px))' }}
+          >
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="btn-secondary flex-1"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="transaction-form"
+                className="btn-primary flex-1"
+                disabled={loading}
+              >
+                {loading ? (
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    Adding...
+                  </span>
+                ) : (
+                  'Add'
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
