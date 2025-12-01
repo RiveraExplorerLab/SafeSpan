@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
@@ -30,20 +31,21 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
+          <img src="/logo.svg" alt="SafeSpan" className="w-16 h-16 mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-primary-600">SafeSpan</h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
             Paycheck-to-paycheck budgeting made simple
           </p>
         </div>
 
         <div className="card">
-          <h2 className="text-xl font-semibold mb-6">Sign In</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Sign In</h2>
 
           {error && (
-            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg mb-4 text-sm">
+            <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg mb-4 text-sm">
               {error}
             </div>
           )}
@@ -89,8 +91,17 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="mt-4 text-center text-xs text-gray-500">
+          <p className="mt-4 text-center text-xs text-gray-500 dark:text-gray-400">
             Access is by invitation only.
+          </p>
+        </div>
+
+        <div className="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
+          <p>By signing in, you agree to our</p>
+          <p className="mt-1">
+            <Link to="/terms" className="text-primary-600 hover:underline">Terms of Service</Link>
+            {' '}&{' '}
+            <Link to="/privacy" className="text-primary-600 hover:underline">Privacy Policy</Link>
           </p>
         </div>
       </div>

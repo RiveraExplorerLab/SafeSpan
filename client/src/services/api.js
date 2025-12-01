@@ -318,3 +318,15 @@ export async function addPaycheck(sourceId, { date, deposits } = {}) {
 export async function fetchSpendingTrends(periods = 6) {
   return apiRequest(`/api/analytics/spending-trends?periods=${periods}`);
 }
+
+// ============ Legal ============
+
+export async function fetchLegalStatus() {
+  return apiRequest('/api/legal/status');
+}
+
+export async function agreeLegal() {
+  return apiRequest('/api/legal/agree', {
+    method: 'POST',
+  });
+}

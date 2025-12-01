@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useOverview } from '../hooks/useOverview';
+import { fetchLegalStatus, agreeLegal } from '../services/api';
 import SetupPage from './SetupPage';
 import Navigation from '../components/Navigation';
 import { DashboardSkeleton } from '../components/Skeleton';
@@ -17,6 +18,7 @@ import UpcomingPaydaysCard from '../components/UpcomingPaydaysCard';
 import SpendingTrendsCard from '../components/SpendingTrendsCard';
 import BottomNav from '../components/BottomNav';
 import FloatingActionButton from '../components/FloatingActionButton';
+import LegalAgreementModal from '../components/LegalAgreementModal';
 import { BillsView, TransactionsView, HistoryView, AccountsView } from './views';
 
 // Loading screen shown after setup while waiting for data
@@ -38,6 +40,39 @@ export default function DashboardPage() {
   const [setupComplete, setSetupComplete] = useState(false);
   const [currentView, setCurrentView] = useState('dashboard');
   const [showTransactionModal, setShowTransactionModal] = useState(false);
+  
+  // Legal agreement state
+  const [legalAgreed, setLegalAgreed] = useState(null); // null = loading, true/false = checked
+  const [legalLoading, setLegalLoading] = useState(false);
+
+  // Check legal status on mount
+  useEffect(() => {
+    async function checkLegalStatus() {
+      try {
+        const status = await fetchLegalStatus();
+        setLegalAgreed(status.agreed);
+      } catch (err) {
+        console.error('Error checking legal status:', err);
+        // If error, assume not agreed to be safe
+        setLegalAgreed(false);
+      }
+    }
+    checkLegalStatus();
+  }, []);
+
+  // Handle user agreeing to terms
+  const handleLegalAgree = async () => {
+    setLegalLoading(true);
+    try {
+      await agreeLegal();
+      setLegalAgreed(true);
+    } catch (err) {
+      console.error('Error recording agreement:', err);
+      alert('Failed to save agreement. Please try again.');
+    } finally {
+      setLegalLoading(false);
+    }
+  };
 
   useEffect(() => {
     refresh();
@@ -75,13 +110,32 @@ export default function DashboardPage() {
     }
   };
 
+  // Show loading while checking legal status
+  if (legalAgreed === null) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-10 h-10 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-3"></div>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Show loading screen after setup completes
   if (setupComplete && !data) {
     return <SetupLoadingScreen />;
   }
 
   if (needsSetup) {
-    return <SetupPage onComplete={handleSetupComplete} />;
+    return (
+      <>
+        {!legalAgreed && (
+          <LegalAgreementModal onAgree={handleLegalAgree} loading={legalLoading} />
+        )}
+        <SetupPage onComplete={handleSetupComplete} />
+      </>
+    );
   }
 
   const renderContent = () => {
@@ -112,6 +166,11 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 md:pb-0">
+      {/* Legal Agreement Modal - blocks app usage until agreed */}
+      {!legalAgreed && (
+        <LegalAgreementModal onAgree={handleLegalAgree} loading={legalLoading} />
+      )}
+      
       <Navigation currentView={currentView} onNavigate={navigateTo} />
       {renderContent()}
       {currentView === 'dashboard' && (

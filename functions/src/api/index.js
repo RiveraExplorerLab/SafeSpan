@@ -13,6 +13,7 @@ import goalsRouter from './routes/goals.js';
 import adminRouter from './routes/admin.js';
 import incomeSourcesRouter from './routes/incomeSources.js';
 import analyticsRouter from './routes/analytics.js';
+import legalRouter from './routes/legal.js';
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use('/api/goals', goalsRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/income-sources', incomeSourcesRouter);
 app.use('/api/analytics', analyticsRouter);
+app.use('/api/legal', legalRouter);
 
 // Health check (no auth required)
 app.get('/health', (req, res) => {
