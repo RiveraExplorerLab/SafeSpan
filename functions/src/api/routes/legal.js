@@ -5,6 +5,7 @@
 
 import { Router } from 'express';
 import { db } from '../firebase.js';
+import { successResponse, errorResponse } from '../utils/response.js';
 
 const router = Router();
 
@@ -15,20 +16,20 @@ router.get('/status', async (req, res) => {
     const userDoc = await db.collection('users').doc(userId).get();
     
     if (!userDoc.exists) {
-      return res.json({ agreed: false });
+      return res.json(successResponse({ agreed: false }));
     }
 
     const data = userDoc.data();
     const agreed = !!(data.tosAgreedAt && data.privacyAgreedAt);
     
-    res.json({ 
+    res.json(successResponse({ 
       agreed,
       tosAgreedAt: data.tosAgreedAt || null,
       privacyAgreedAt: data.privacyAgreedAt || null
-    });
+    }));
   } catch (error) {
     console.error('Error checking legal status:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json(errorResponse('SERVER_ERROR', error.message));
   }
 });
 
@@ -45,13 +46,13 @@ router.post('/agree', async (req, res) => {
       privacyVersion: '2025-12-01',
     }, { merge: true });
 
-    res.json({ 
+    res.json(successResponse({ 
       success: true, 
       agreedAt: now 
-    });
+    }));
   } catch (error) {
     console.error('Error recording legal agreement:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json(errorResponse('SERVER_ERROR', error.message));
   }
 });
 
