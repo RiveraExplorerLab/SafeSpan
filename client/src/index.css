@@ -24,24 +24,49 @@ body {
 
 @layer components {
   .card {
-    border-radius: 0.5rem;
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
     padding: 1rem;
   }
 
+  /* Tighter card padding on mobile */
+  @media (max-width: 640px) {
+    .card {
+      padding: 0.875rem;
+      border-radius: 0.625rem;
+    }
+    
+    .card-compact {
+      padding: 0.75rem;
+    }
+  }
+
+  /* Card section spacing */
+  .card-section {
+    @apply py-3 border-t border-gray-100 dark:border-gray-700;
+  }
+
+  @media (max-width: 640px) {
+    .card-section {
+      @apply py-2;
+    }
+  }
+
   .btn-primary {
-    @apply bg-primary-500 text-white px-4 py-2 rounded-lg font-medium
+    @apply bg-primary-500 text-white px-5 py-3 rounded-xl font-medium
            hover:bg-primary-600 focus:outline-none focus:ring-2 
            focus:ring-primary-500 focus:ring-offset-2
            disabled:opacity-50 disabled:cursor-not-allowed
            transition-colors duration-200;
+    min-height: 48px;
   }
 
   .btn-secondary {
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.75rem;
     font-weight: 500;
     transition: background-color 0.2s;
+    min-height: 48px;
   }
   
   .btn-secondary:disabled {
@@ -49,17 +74,33 @@ body {
     cursor: not-allowed;
   }
 
+  /* Touch-friendly tap targets */
+  .tap-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
   .input {
     width: 100%;
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
     border-width: 1px;
+    font-size: 1rem;
+    min-height: 48px;
   }
   
   .input:focus {
     outline: none;
     box-shadow: 0 0 0 2px #10b981;
     border-color: transparent;
+  }
+
+  /* Larger inputs on mobile */
+  @media (max-width: 768px) {
+    .input {
+      min-height: 52px;
+      font-size: 16px; /* Prevents iOS zoom */
+    }
   }
 
   .label {
@@ -321,4 +362,53 @@ html.dark .hover\:bg-gray-50:hover {
 
 html.dark .hover\:bg-gray-800:hover {
   background-color: #1f2937;
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Hide scrollbar but allow scrolling */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Safe area padding for iOS */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }

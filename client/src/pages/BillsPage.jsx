@@ -15,6 +15,7 @@ export default function BillsPage({ onBack }) {
     amount: '',
     dueDay: '',
     isAutoPay: false,
+    autoMarkPaid: false,
   });
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState('');
@@ -37,7 +38,7 @@ export default function BillsPage({ onBack }) {
 
   const openAddForm = () => {
     setEditingBill(null);
-    setFormData({ name: '', amount: '', dueDay: '', isAutoPay: false });
+    setFormData({ name: '', amount: '', dueDay: '', isAutoPay: false, autoMarkPaid: false });
     setFormError('');
     setIsFormOpen(true);
   };
@@ -49,6 +50,7 @@ export default function BillsPage({ onBack }) {
       amount: bill.amount.toString(),
       dueDay: bill.dueDay.toString(),
       isAutoPay: bill.isAutoPay,
+      autoMarkPaid: bill.autoMarkPaid || false,
     });
     setFormError('');
     setIsFormOpen(true);
@@ -72,6 +74,7 @@ export default function BillsPage({ onBack }) {
         frequency: 'monthly',
         dueDay: parseInt(formData.dueDay, 10),
         isAutoPay: formData.isAutoPay,
+        autoMarkPaid: formData.autoMarkPaid,
       };
 
       if (editingBill) {
@@ -170,7 +173,7 @@ export default function BillsPage({ onBack }) {
                   <div>
                     <p className="font-medium text-gray-900">{bill.name}</p>
                     <p className="text-sm text-gray-500">
-                      Due on the {ordinal(bill.dueDay)} • {bill.isAutoPay ? 'Auto-pay' : 'Manual'}
+                      Due on the {ordinal(bill.dueDay)} • {bill.isAutoPay ? 'Auto-pay' : 'Manual'}{bill.autoMarkPaid ? ' • Auto-mark' : ''}
                     </p>
                   </div>
                 </div>
@@ -301,7 +304,7 @@ export default function BillsPage({ onBack }) {
                 </p>
               </div>
 
-              <div className="mb-6">
+              <div className="mb-4">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -313,6 +316,26 @@ export default function BillsPage({ onBack }) {
                   />
                   <span className="text-sm text-gray-700">Auto-pay enabled</span>
                 </label>
+                <p className="text-xs text-gray-500 ml-6 mt-1">
+                  This bill is set up to pay automatically
+                </p>
+              </div>
+
+              <div className="mb-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
+                    checked={formData.autoMarkPaid}
+                    onChange={(e) =>
+                      setFormData({ ...formData, autoMarkPaid: e.target.checked })
+                    }
+                  />
+                  <span className="text-sm text-gray-700">Auto-mark as paid</span>
+                </label>
+                <p className="text-xs text-gray-500 ml-6 mt-1">
+                  Automatically mark this bill as paid on its due date
+                </p>
               </div>
 
               <div className="flex gap-3">

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { fetchOverview, processRecurring } from '../services/api';
+import { fetchOverview, processRecurring, processIncomeSources } from '../services/api';
 
 /**
  * Hook for fetching and managing dashboard overview data
@@ -18,8 +18,14 @@ export function useOverview() {
       try {
         await processRecurring();
       } catch (err) {
-        // Silently ignore - recurring processing is optional
         console.debug('Recurring process skipped:', err.message);
+      }
+
+      // Process any due auto-add income sources (silently)
+      try {
+        await processIncomeSources();
+      } catch (err) {
+        console.debug('Income sources process skipped:', err.message);
       }
 
       const result = await fetchOverview();

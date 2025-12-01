@@ -43,8 +43,8 @@ export default function HistoryView() {
 
   if (loading) {
     return (
-      <main className="max-w-4xl mx-auto px-4 py-6">
-        <div className="h-6 bg-gray-200 rounded w-48 mb-6 animate-pulse"></div>
+      <main className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-6 animate-pulse"></div>
         <div className="space-y-3">
           {[1, 2, 3].map(i => <SkeletonBillCard key={i} />)}
         </div>
@@ -53,9 +53,9 @@ export default function HistoryView() {
   }
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-6">Pay Period History</h2>
-      {error && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg mb-4 text-sm">{error}</div>}
+    <main className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Pay Period History</h2>
+      {error && <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg mb-4 text-sm">{error}</div>}
       
       {periods.length === 0 ? (
         <EmptyPayPeriodHistory />

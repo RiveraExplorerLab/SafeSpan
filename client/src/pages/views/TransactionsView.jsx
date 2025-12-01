@@ -3,6 +3,8 @@ import { useConfirm } from '../../components/ConfirmDialog';
 import { SkeletonTransactionList } from '../../components/Skeleton';
 import { EmptyTransactions } from '../../components/EmptyState';
 import { getCategoryEmoji, CATEGORIES } from '../../utils/categories';
+import QuickAddTransaction from '../../components/QuickAddTransaction';
+import FloatingActionButton from '../../components/FloatingActionButton';
 
 export default function TransactionsView() {
   const confirm = useConfirm();
@@ -25,6 +27,7 @@ export default function TransactionsView() {
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState('');
   const [loadingMore, setLoadingMore] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const limit = 20;
 
   const TYPE_LABELS = { income: 'Income', debit_purchase: 'Purchase', bill_payment: 'Bill Payment', transfer: 'Transfer', cc_payment: 'Card Payment' };
@@ -225,7 +228,7 @@ export default function TransactionsView() {
   }
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-6">
+    <main className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Transactions</h2>
@@ -258,6 +261,16 @@ export default function TransactionsView() {
                   Export
                 </>
               )}
+            </button>
+            {/* Desktop Add Button */}
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="hidden md:inline-flex btn-primary text-sm items-center gap-1.5"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Add
             </button>
           </div>
         </div>
@@ -461,6 +474,21 @@ export default function TransactionsView() {
           </div>
         </div>
       )}
+
+      {/* Add Transaction Modal */}
+      <QuickAddTransaction 
+        onSuccess={() => {
+          loadTransactions();
+          setShowAddModal(false);
+        }} 
+        accounts={accounts}
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        showTrigger={false}
+      />
+
+      {/* Mobile FAB */}
+      <FloatingActionButton onClick={() => setShowAddModal(true)} />
     </main>
   );
 }

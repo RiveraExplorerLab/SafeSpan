@@ -145,6 +145,14 @@ export async function deleteBill(billId) {
   });
 }
 
+export async function markBillPaid(billId) {
+  const today = new Date().toISOString().split('T')[0];
+  return apiRequest(`/api/bills/${billId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ lastPaidDate: today }),
+  });
+}
+
 // ============ Transactions ============
 
 export async function fetchTransactions(params = {}) {
@@ -263,4 +271,50 @@ export async function contributeToGoal(goalId, amount) {
     method: 'POST',
     body: JSON.stringify({ amount }),
   });
+}
+
+// ============ Income Sources ============
+
+export async function fetchIncomeSources(includeInactive = false) {
+  const query = includeInactive ? '?includeInactive=true' : '';
+  return apiRequest(`/api/income-sources${query}`);
+}
+
+export async function createIncomeSource(source) {
+  return apiRequest('/api/income-sources', {
+    method: 'POST',
+    body: JSON.stringify(source),
+  });
+}
+
+export async function updateIncomeSource(sourceId, updates) {
+  return apiRequest(`/api/income-sources/${sourceId}`, {
+    method: 'PUT',
+    body: JSON.stringify(updates),
+  });
+}
+
+export async function deleteIncomeSource(sourceId) {
+  return apiRequest(`/api/income-sources/${sourceId}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function processIncomeSources() {
+  return apiRequest('/api/income-sources/process', {
+    method: 'POST',
+  });
+}
+
+export async function addPaycheck(sourceId, { date, deposits } = {}) {
+  return apiRequest(`/api/income-sources/${sourceId}/add-paycheck`, {
+    method: 'POST',
+    body: JSON.stringify({ date, deposits }),
+  });
+}
+
+// ============ Analytics ============
+
+export async function fetchSpendingTrends(periods = 6) {
+  return apiRequest(`/api/analytics/spending-trends?periods=${periods}`);
 }

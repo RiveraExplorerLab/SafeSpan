@@ -56,12 +56,79 @@ router.get('/', async (req, res, next) => {
     const totalCreditAvailable = totalCreditLimit - creditOwed;
     const netWorth = cashBalance - creditOwed; // Cash minus debt
 
-    // Calculate current pay period
-    const { periodStart, periodEnd, nextPayDate } = calculatePayPeriod(
-      settings.payFrequency,
-      settings.payAnchorDate,
-      settings.semimonthlyDays
-    );
+    const todayStr = today();
+    const todayDate = parseDate(todayStr);
+
+    // Fetch income sources
+    const incomeSourcesSnapshot = await userRef
+      .collection('incomeSources')
+      .where('isActive', '==', true)
+      .get();
+
+    const incomeSources = [];
+    const upcomingPaydays = [];
+
+    for (const doc of incomeSourcesSnapshot.docs) {
+      const source = { id: doc.id, ...doc.data() };
+      
+      // Calculate next pay date for this source
+      const { nextPayDate: sourceNextPayDate } = calculatePayPeriod(
+        source.frequency,
+        source.anchorDate,
+        source.semimonthlyDays,
+        todayStr
+      );
+
+      const totalAmount = source.deposits.reduce((sum, d) => sum + d.amount, 0);
+
+      incomeSources.push({
+        id: source.id,
+        name: source.name,
+        frequency: source.frequency,
+        autoAdd: source.autoAdd,
+        expectedAmount: source.expectedAmount || totalAmount,
+        nextPayDate: sourceNextPayDate,
+        deposits: source.deposits,
+      });
+
+      upcomingPaydays.push({
+        sourceId: source.id,
+        sourceName: source.name,
+        date: sourceNextPayDate,
+        amount: totalAmount,
+        autoAdd: source.autoAdd,
+      });
+    }
+
+    // Sort upcoming paydays by date
+    upcomingPaydays.sort((a, b) => a.date.localeCompare(b.date));
+
+    // Use first income source's pay period, or fall back to settings
+    let periodStart, periodEnd, nextPayDate;
+    
+    if (incomeSources.length > 0) {
+      // Use the primary/first income source for period calculation
+      const primarySource = incomeSources[0];
+      const periodCalc = calculatePayPeriod(
+        primarySource.frequency,
+        primarySource.nextPayDate, // Use next pay date as anchor
+        null,
+        todayStr
+      );
+      periodStart = periodCalc.periodStart;
+      periodEnd = periodCalc.periodEnd;
+      nextPayDate = primarySource.nextPayDate;
+    } else {
+      // Fall back to settings (legacy support)
+      const periodCalc = calculatePayPeriod(
+        settings.payFrequency,
+        settings.payAnchorDate,
+        settings.semimonthlyDays
+      );
+      periodStart = periodCalc.periodStart;
+      periodEnd = periodCalc.periodEnd;
+      nextPayDate = periodCalc.nextPayDate;
+    }
 
     // Get or create pay period summary
     const currentPeriod = await getOrCreatePayPeriod(userId, periodStart, periodStart, periodEnd);
@@ -73,26 +140,34 @@ router.get('/', async (req, res, next) => {
       .orderBy('dueDay', 'asc')
       .get();
 
-    const todayStr = today();
-    const todayDate = parseDate(todayStr);
     const nextPayDateObj = parseDate(nextPayDate);
 
     // Calculate upcoming bills (due between today and next pay date)
     const upcomingBills = [];
     let requiredReserve = 0;
+    const billsToAutoMark = []; // Track bills that need auto-marking
 
-    billsSnapshot.docs.forEach((doc) => {
+    for (const doc of billsSnapshot.docs) {
       const bill = { id: doc.id, ...doc.data() };
       
       // Calculate next due date for this bill
       const dueDateObj = getNextDueDate(bill, todayStr);
       const dueDate = formatDate(dueDateObj);
 
+      // Check if already paid this period
+      let isPaidThisPeriod = bill.lastPaidDate && isOnOrBefore(periodStart, bill.lastPaidDate);
+
+      // Auto-mark paid: if enabled and due date has passed (or is today) and not already paid
+      if (bill.autoMarkPaid && !isPaidThisPeriod && isOnOrBefore(dueDateObj, todayDate)) {
+        billsToAutoMark.push({
+          id: bill.id,
+          ref: userRef.collection('bills').doc(bill.id),
+        });
+        isPaidThisPeriod = true; // Mark as paid for this response
+      }
+
       // Check if bill is due before next paycheck
       if (isOnOrBefore(dueDateObj, nextPayDateObj)) {
-        // Check if already paid this period
-        const isPaidThisPeriod = bill.lastPaidDate && isOnOrBefore(periodStart, bill.lastPaidDate);
-        
         upcomingBills.push({
           id: bill.id,
           name: bill.name,
@@ -100,6 +175,7 @@ router.get('/', async (req, res, next) => {
           dueDate,
           isPaidThisPeriod,
           isAutoPay: bill.isAutoPay || false,
+          autoMarkPaid: bill.autoMarkPaid || false,
         });
 
         // Only add to reserve if not yet paid
@@ -107,7 +183,19 @@ router.get('/', async (req, res, next) => {
           requiredReserve += bill.amount;
         }
       }
-    });
+    }
+
+    // Process auto-mark updates in background (don't await to keep response fast)
+    if (billsToAutoMark.length > 0) {
+      const batch = db.batch();
+      for (const item of billsToAutoMark) {
+        batch.update(item.ref, {
+          lastPaidDate: todayStr,
+          updatedAt: new Date(),
+        });
+      }
+      batch.commit().catch(err => console.error('Auto-mark paid failed:', err));
+    }
 
     // Calculate safe-to-spend (based on primary account, should be a bank account)
     const safeAmount = Math.max(0, primaryAccount.currentBalance - requiredReserve);
@@ -156,6 +244,9 @@ router.get('/', async (req, res, next) => {
       updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString() || null,
     }));
 
+    // Calculate total expected income
+    const totalExpectedIncome = incomeSources.reduce((sum, s) => sum + (s.expectedAmount || 0), 0);
+
     // Build response
     const overview = {
       // All accounts with full details
@@ -181,10 +272,14 @@ router.get('/', async (req, res, next) => {
       creditOwed, // Total credit card debt
       totalCreditLimit, // Total credit limits
       totalCreditAvailable, // Available credit
-      // Pay schedule
+      // Income sources
+      incomeSources,
+      upcomingPaydays,
+      totalExpectedIncome,
+      // Pay schedule (uses first income source or settings)
       paySchedule: {
-        frequency: settings.payFrequency,
-        netPayAmount: settings.netPayAmount,
+        frequency: incomeSources[0]?.frequency || settings.payFrequency,
+        netPayAmount: totalExpectedIncome || settings.netPayAmount,
         nextPayDate,
       },
       currentPeriod: {

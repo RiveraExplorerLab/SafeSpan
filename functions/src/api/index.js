@@ -11,6 +11,8 @@ import payPeriodsRouter from './routes/payPeriods.js';
 import recurringRouter from './routes/recurring.js';
 import goalsRouter from './routes/goals.js';
 import adminRouter from './routes/admin.js';
+import incomeSourcesRouter from './routes/incomeSources.js';
+import analyticsRouter from './routes/analytics.js';
 
 const app = express();
 
@@ -31,6 +33,8 @@ app.use('/api/pay-periods', payPeriodsRouter);
 app.use('/api/recurring', recurringRouter);
 app.use('/api/goals', goalsRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/income-sources', incomeSourcesRouter);
+app.use('/api/analytics', analyticsRouter);
 
 // Health check (no auth required)
 app.get('/health', (req, res) => {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useConfirm } from '../../components/ConfirmDialog';
 import { CATEGORIES } from '../../utils/categories';
+import IncomeSourcesCard from '../../components/IncomeSourcesCard';
 
 export default function AccountsView() {
   const confirm = useConfirm();
@@ -30,6 +31,9 @@ export default function AccountsView() {
   const [categoryBudgets, setCategoryBudgets] = useState({});
   const [budgetFormOpen, setBudgetFormOpen] = useState(false);
   const [budgetFormLoading, setBudgetFormLoading] = useState(false);
+
+  // Income sources state
+  const [incomeSources, setIncomeSources] = useState([]);
 
   const PAY_FREQUENCIES = [
     { value: 'weekly', label: 'Weekly' },
@@ -65,11 +69,12 @@ export default function AccountsView() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const { fetchSettings, fetchAccounts, fetchRecurring } = await import('../../services/api');
-      const [settingsData, accountsData, recurringData] = await Promise.all([
+      const { fetchSettings, fetchAccounts, fetchRecurring, fetchIncomeSources } = await import('../../services/api');
+      const [settingsData, accountsData, recurringData, incomeSourcesData] = await Promise.all([
         fetchSettings(), 
         fetchAccounts(), 
-        fetchRecurring(true).catch(() => [])
+        fetchRecurring(true).catch(() => []),
+        fetchIncomeSources(true).catch(() => [])
       ]);
       setPayFrequency(settingsData.payFrequency);
       setPayAnchorDate(settingsData.payAnchorDate);
@@ -81,6 +86,7 @@ export default function AccountsView() {
       setCategoryBudgets(settingsData.categoryBudgets || {});
       setAccounts(accountsData);
       setRecurring(recurringData);
+      setIncomeSources(incomeSourcesData);
     } catch (err) { setError(err.message); } 
     finally { setLoading(false); }
   };
@@ -262,7 +268,7 @@ export default function AccountsView() {
 
   if (loading) {
     return (
-      <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-6">
         <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-24 animate-pulse"></div>
         <div className="card animate-pulse">
           <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-20 mb-4"></div>
@@ -277,7 +283,7 @@ export default function AccountsView() {
   }
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+    <main className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-6">
       <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Accounts</h2>
       
       {error && <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg text-sm animate-fadeIn">{error}</div>}
@@ -339,6 +345,9 @@ export default function AccountsView() {
           })}
         </div>
       </div>
+
+      {/* Income Sources Section */}
+      <IncomeSourcesCard sources={incomeSources} accounts={accounts} onUpdate={loadData} />
 
       {/* Budget Limits Section */}
       <div className="card">

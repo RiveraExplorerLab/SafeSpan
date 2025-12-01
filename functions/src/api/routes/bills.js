@@ -83,7 +83,7 @@ router.get('/:billId', async (req, res, next) => {
 router.post('/', async (req, res, next) => {
   try {
     const { userId } = req;
-    const { name, amount, frequency, dueDay, isAutoPay, autoPayAccountId, alreadyPaid } = req.body;
+    const { name, amount, frequency, dueDay, isAutoPay, autoPayAccountId, autoMarkPaid, alreadyPaid } = req.body;
 
     // Validation
     if (!name || typeof name !== 'string') {
@@ -139,6 +139,7 @@ router.post('/', async (req, res, next) => {
       dueDay,
       isAutoPay: isAutoPay || false,
       autoPayAccountId: resolvedAutoPayAccountId || null,
+      autoMarkPaid: autoMarkPaid || false,
       categoryId: null,
       lastPaidDate: alreadyPaid ? today : null,
       isActive: true,
@@ -171,7 +172,7 @@ router.put('/:billId', async (req, res, next) => {
   try {
     const { userId } = req;
     const { billId } = req.params;
-    const { name, amount, dueDay, isAutoPay, autoPayAccountId, isActive } = req.body;
+    const { name, amount, dueDay, isAutoPay, autoPayAccountId, autoMarkPaid, isActive, lastPaidDate } = req.body;
 
     const billRef = db
       .collection('users')
@@ -223,6 +224,14 @@ router.put('/:billId', async (req, res, next) => {
 
     if (autoPayAccountId !== undefined) {
       updates.autoPayAccountId = autoPayAccountId;
+    }
+
+    if (autoMarkPaid !== undefined) {
+      updates.autoMarkPaid = Boolean(autoMarkPaid);
+    }
+
+    if (lastPaidDate !== undefined) {
+      updates.lastPaidDate = lastPaidDate;
     }
 
     if (isActive !== undefined) {
