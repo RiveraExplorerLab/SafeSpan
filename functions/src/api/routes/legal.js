@@ -11,7 +11,7 @@ const router = Router();
 // GET /api/legal/status - Check if user has agreed to terms
 router.get('/status', async (req, res) => {
   try {
-    const userId = req.user.uid;
+    const userId = req.userId;
     const userDoc = await db.collection('users').doc(userId).get();
     
     if (!userDoc.exists) {
@@ -35,7 +35,7 @@ router.get('/status', async (req, res) => {
 // POST /api/legal/agree - Record user's agreement to terms
 router.post('/agree', async (req, res) => {
   try {
-    const userId = req.user.uid;
+    const userId = req.userId;
     const now = new Date().toISOString();
     
     await db.collection('users').doc(userId).set({
