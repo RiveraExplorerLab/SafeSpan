@@ -6,14 +6,8 @@ import IncomeSourcesCard from '../../components/IncomeSourcesCard';
 export default function AccountsView() {
   const confirm = useConfirm();
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [payFrequency, setPayFrequency] = useState('biweekly');
-  const [payAnchorDate, setPayAnchorDate] = useState('');
-  const [netPayAmount, setNetPayAmount] = useState('');
-  const [semimonthlyDay1, setSemimonthlyDay1] = useState('1');
-  const [semimonthlyDay2, setSemimonthlyDay2] = useState('15');
   const [accounts, setAccounts] = useState([]);
   const [editingAccount, setEditingAccount] = useState(null);
   const [accountFormOpen, setAccountFormOpen] = useState(false);
@@ -34,13 +28,6 @@ export default function AccountsView() {
 
   // Income sources state
   const [incomeSources, setIncomeSources] = useState([]);
-
-  const PAY_FREQUENCIES = [
-    { value: 'weekly', label: 'Weekly' },
-    { value: 'biweekly', label: 'Every 2 weeks' },
-    { value: 'semimonthly', label: 'Twice a month' },
-    { value: 'monthly', label: 'Monthly' },
-  ];
 
   const ACCOUNT_TYPES = [
     { value: 'checking', label: 'Checking' },
@@ -76,32 +63,12 @@ export default function AccountsView() {
         fetchRecurring(true).catch(() => []),
         fetchIncomeSources(true).catch(() => [])
       ]);
-      setPayFrequency(settingsData.payFrequency);
-      setPayAnchorDate(settingsData.payAnchorDate);
-      setNetPayAmount(settingsData.netPayAmount.toString());
-      if (settingsData.semimonthlyDays) {
-        setSemimonthlyDay1(settingsData.semimonthlyDays[0].toString());
-        setSemimonthlyDay2(settingsData.semimonthlyDays[1].toString());
-      }
       setCategoryBudgets(settingsData.categoryBudgets || {});
       setAccounts(accountsData);
       setRecurring(recurringData);
       setIncomeSources(incomeSourcesData);
     } catch (err) { setError(err.message); } 
     finally { setLoading(false); }
-  };
-
-  const handleSaveSettings = async (e) => {
-    e.preventDefault();
-    setError(''); setSuccess(''); setSaving(true);
-    try {
-      const { updateSettings } = await import('../../services/api');
-      const settings = { payFrequency, payAnchorDate, netPayAmount: parseFloat(netPayAmount) };
-      if (payFrequency === 'semimonthly') settings.semimonthlyDays = [parseInt(semimonthlyDay1, 10), parseInt(semimonthlyDay2, 10)];
-      await updateSettings(settings);
-      setSuccess('Pay schedule updated!');
-    } catch (err) { setError(err.message); } 
-    finally { setSaving(false); }
   };
 
   const handleSaveBudgets = async (e) => {
@@ -284,7 +251,7 @@ export default function AccountsView() {
 
   return (
     <main className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-6">
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Accounts</h2>
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Settings</h2>
       
       {error && <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg text-sm animate-fadeIn">{error}</div>}
       {success && (
@@ -418,48 +385,6 @@ export default function AccountsView() {
             })}
           </div>
         )}
-      </div>
-
-      {/* Pay Schedule Section */}
-      <div className="card">
-        <h3 className="text-base font-semibold mb-4 dark:text-white">Pay Schedule</h3>
-        <form onSubmit={handleSaveSettings}>
-          <div className="mb-4">
-            <label htmlFor="payFrequency" className="label">Pay Frequency</label>
-            <select id="payFrequency" className="input" value={payFrequency} onChange={(e) => setPayFrequency(e.target.value)}>
-              {PAY_FREQUENCIES.map((freq) => <option key={freq.value} value={freq.value}>{freq.label}</option>)}
-            </select>
-          </div>
-          {payFrequency === 'semimonthly' && (
-            <div className="mb-4">
-              <label className="label">Pay Days</label>
-              <div className="flex gap-3 items-center">
-                <input type="number" className="input w-20" value={semimonthlyDay1} onChange={(e) => setSemimonthlyDay1(e.target.value)} min="1" max="31" required />
-                <span className="text-gray-400">and</span>
-                <input type="number" className="input w-20" value={semimonthlyDay2} onChange={(e) => setSemimonthlyDay2(e.target.value)} min="1" max="31" required />
-              </div>
-            </div>
-          )}
-          <div className="mb-4">
-            <label htmlFor="payAnchorDate" className="label">Reference Pay Date</label>
-            <input type="date" id="payAnchorDate" className="input" value={payAnchorDate} onChange={(e) => setPayAnchorDate(e.target.value)} required />
-          </div>
-          <div className="mb-4">
-            <label htmlFor="netPayAmount" className="label">Net Pay Amount</label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
-              <input type="number" id="netPayAmount" className="input pl-7" value={netPayAmount} onChange={(e) => setNetPayAmount(e.target.value)} step="0.01" min="0" required />
-            </div>
-          </div>
-          <button type="submit" className="btn-primary inline-flex items-center gap-2" disabled={saving}>
-            {saving ? (
-              <>
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                Saving...
-              </>
-            ) : 'Save Pay Schedule'}
-          </button>
-        </form>
       </div>
 
       {/* Account Form Modal */}

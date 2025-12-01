@@ -36,9 +36,7 @@ export default function Navigation({ currentView, onNavigate }) {
             onClick={() => handleNavigate('dashboard')}
             className="flex items-center gap-2 text-xl font-bold text-primary-600 hover:text-primary-700 transition-colors"
           >
-            <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
-              <span className="text-white text-sm font-bold">S</span>
-            </div>
+            <img src="/logo.svg" alt="SafeSpan" className="w-8 h-8" />
             <span className="hidden sm:inline">SafeSpan</span>
           </button>
 

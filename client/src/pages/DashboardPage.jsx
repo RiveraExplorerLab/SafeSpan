@@ -268,23 +268,6 @@ function DashboardContent({ data, loading, error, refresh, needsSetup, onNavigat
           <EmptyRecentTransactions />
         )}
       </div>
-
-      <div className="mt-4 sm:mt-6 text-center pb-4">
-        <button
-          onClick={refresh}
-          disabled={loading}
-          className="btn-secondary inline-flex items-center gap-2"
-        >
-          {loading ? (
-            <>
-              <span className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></span>
-              Refreshing...
-            </>
-          ) : (
-            'Refresh'
-          )}
-        </button>
-      </div>
     </main>
   );
 }

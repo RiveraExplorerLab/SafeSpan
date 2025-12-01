@@ -81,7 +81,7 @@ export default function BottomNav({ currentView, onNavigate }) {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 pb-safe">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
       <div className="flex items-center justify-around h-16">
         {navItems.map((item) => {
           const isActive = currentView === item.id;
@@ -105,6 +105,8 @@ export default function BottomNav({ currentView, onNavigate }) {
           );
         })}
       </div>
+      {/* Safe area spacer for iPhone home indicator */}
+      <div className="h-safe-area-bottom bg-white dark:bg-gray-900" style={{ paddingBottom: 'env(safe-area-inset-bottom, 8px)' }} />
     </nav>
   );
 }

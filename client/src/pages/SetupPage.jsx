@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { createAccount } from '../services/api';
-import { updateSettings } from '../services/api';
+import { createAccount, updateSettings, createIncomeSource } from '../services/api';
 
 const PAY_FREQUENCIES = [
   { value: 'weekly', label: 'Weekly' },
@@ -18,7 +17,8 @@ export default function SetupPage({ onComplete }) {
   const [accountName, setAccountName] = useState('Primary Checking');
   const [currentBalance, setCurrentBalance] = useState('');
 
-  // Pay schedule data
+  // Income source data
+  const [incomeName, setIncomeName] = useState('Primary Income');
   const [payFrequency, setPayFrequency] = useState('biweekly');
   const [payAnchorDate, setPayAnchorDate] = useState('');
   const [netPayAmount, setNetPayAmount] = useState('');
@@ -43,12 +43,13 @@ export default function SetupPage({ onComplete }) {
         currentBalance: parseFloat(currentBalance),
       });
 
-      // Then create settings
+      // Create settings (minimal - just primary account and legacy fallback)
       const settings = {
+        primaryAccountId: account.id,
+        // Legacy fallback values (used if no income sources exist)
         payFrequency,
         payAnchorDate,
         netPayAmount: parseFloat(netPayAmount),
-        primaryAccountId: account.id,
       };
 
       if (payFrequency === 'semimonthly') {
@@ -59,6 +60,28 @@ export default function SetupPage({ onComplete }) {
       }
 
       await updateSettings(settings);
+
+      // Create the income source (primary source for pay schedule)
+      const incomeSourceData = {
+        name: incomeName,
+        frequency: payFrequency,
+        anchorDate: payAnchorDate,
+        autoAdd: true,
+        deposits: [{
+          accountId: account.id,
+          amount: parseFloat(netPayAmount),
+        }],
+        expectedAmount: parseFloat(netPayAmount),
+      };
+
+      if (payFrequency === 'semimonthly') {
+        incomeSourceData.semimonthlyDays = [
+          parseInt(semimonthlyDay1, 10),
+          parseInt(semimonthlyDay2, 10),
+        ];
+      }
+
+      await createIncomeSource(incomeSourceData);
 
       // Wait for Firestore to propagate the data
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -75,11 +98,12 @@ export default function SetupPage({ onComplete }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
+          <img src="/logo.svg" alt="SafeSpan" className="w-16 h-16 mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-primary-600">SafeSpan</h1>
-          <p className="text-gray-600 mt-2">Let's get you set up</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Let's get you set up</p>
         </div>
 
         <div className="card">
@@ -91,14 +115,14 @@ export default function SetupPage({ onComplete }) {
           </div>
 
           {error && (
-            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg mb-4 text-sm">
+            <div className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg mb-4 text-sm">
               {error}
             </div>
           )}
 
           {step === 1 && (
             <form onSubmit={handleStep1Submit}>
-              <h2 className="text-lg font-semibold mb-4">Your Account</h2>
+              <h2 className="text-lg font-semibold mb-4 dark:text-white">Your Account</h2>
 
               <div className="mb-4">
                 <label htmlFor="accountName" className="label">
@@ -134,7 +158,7 @@ export default function SetupPage({ onComplete }) {
                     required
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Enter your current checking account balance
                 </p>
               </div>
@@ -147,7 +171,22 @@ export default function SetupPage({ onComplete }) {
 
           {step === 2 && (
             <form onSubmit={handleStep2Submit}>
-              <h2 className="text-lg font-semibold mb-4">Pay Schedule</h2>
+              <h2 className="text-lg font-semibold mb-4 dark:text-white">Your Income</h2>
+
+              <div className="mb-4">
+                <label htmlFor="incomeName" className="label">
+                  Income Source Name
+                </label>
+                <input
+                  type="text"
+                  id="incomeName"
+                  className="input"
+                  value={incomeName}
+                  onChange={(e) => setIncomeName(e.target.value)}
+                  placeholder="Primary Job, Freelance, etc."
+                  required
+                />
+              </div>
 
               <div className="mb-4">
                 <label htmlFor="payFrequency" className="label">
@@ -211,7 +250,7 @@ export default function SetupPage({ onComplete }) {
                   onChange={(e) => setPayAnchorDate(e.target.value)}
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Used to calculate your pay periods
                 </p>
               </div>
@@ -235,7 +274,7 @@ export default function SetupPage({ onComplete }) {
                     required
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Take-home pay after taxes and deductions
                 </p>
               </div>
